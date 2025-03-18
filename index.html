@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>4th Dimension Explain By Sahlan Hasan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset and theme styles */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+      color: #00bcd4;
+      font-family: 'Orbitron', sans-serif;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Header */
+    #header {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2em;
+      z-index: 10;
+      text-shadow: 0 0 15px #00bcd4, 0 0 30px #008b9a;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #00bcd4; }
+      to { text-shadow: 0 0 20px #00ffff; }
+    }
+
+    /* Info box */
+    #info {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 320px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border: 1px solid #00bcd4;
+      border-radius: 8px;
+      line-height: 1.5;
+      box-shadow: 0 0 15px #00bcd4;
+    }
+
+    #info h2 {
+      margin-top: 0;
+      font-size: 1.5em;
+    }
+
+    /* Shifting text */
+    #shiftingData {
+      transition: opacity 1s ease-in-out;
+    }
+    .hidden {
+      opacity: 0;
+    }
+
+    /* Animated stars background */
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #00bcd4;
+      box-shadow: 0 0 5px #00ffff;
+      animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+      50% { opacity: 0.3; }
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="header">4th Dimension Explain By Sahlan Hasan</div>
+
+  <div id="info">
+    <h2>About 4th Dimension</h2>
+    <div id="shiftingData"></div>
+  </div>
+
+  <!-- Three.js for rendering -->
+  <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+  
+  <script>
+    // Create stars in the background
+    function createStars(count) {
+      for (let i = 0; i < count; i++) {
+        let star = document.createElement('div');
+        star.className = 'star';
+        star.style.top = `${Math.random() * window.innerHeight}px`;
+        star.style.left = `${Math.random() * window.innerWidth}px`;
+        star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+        document.body.appendChild(star);
+      }
+    }
+    createStars(100); // Generate 100 stars
+
+    // Scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 4D Tesseract Data
+    const vertices4D = [];
+    for (let x of [-1, 1]) {
+      for (let y of [-1, 1]) {
+        for (let z of [-1, 1]) {
+          for (let w of [-1, 1]) {
+            vertices4D.push({ x, y, z, w });
+          }
+        }
+      }
+    }
+
+    // Connectivity (edges)
+    const edges = [];
+    function areConnected(v1, v2) {
+      let diff = 0;
+      if (v1.x !== v2.x) diff++;
+      if (v1.y !== v2.y) diff++;
+      if (v1.z !== v2.z) diff++;
+      if (v1.w !== v2.w) diff++;
+      return diff === 1;
+    }
+    for (let i = 0; i < vertices4D.length; i++) {
+      for (let j = i + 1; j < vertices4D.length; j++) {
+        if (areConnected(vertices4D[i], vertices4D[j])) {
+          edges.push([i, j]);
+        }
+      }
+    }
+
+    // Create tesseract group
+    const tesseractGroup = new THREE.Group();
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00bcd4, linewidth: 3 });
+    const lines = [];
+    for (let edge of edges) {
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(6);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const line = new THREE.Line(geometry, lineMaterial);
+      tesseractGroup.add(line);
+      lines.push({ line, edge });
+    }
+    scene.add(tesseractGroup);
+
+    // Rotation logic
+    let angle = 0;
+    function rotate4D(point, a, b) {
+      let cos = Math.cos(a), sin = Math.sin(a);
+      let x = point.x * cos + point.w * sin;
+      let w = -point.x * sin + point.w * cos;
+      point.x = x; point.w = w;
+      cos = Math.cos(b); sin = Math.sin(b);
+      let y = point.y * cos + point.w * sin;
+      w = -point.y * sin + point.w * cos;
+      point.y = y; point.w = w;
+      return point;
+    }
+
+    function project4Dto3D(point) {
+      const w = 3 - point.w;
+      return { x: point.x / w, y: point.y / w, z: point.z / w };
+    }
+
+    function animate() {
+      angle += 0.01;
+      const projected = [];
+      for (let v of vertices4D) {
+        const p = { ...v };
+        rotate4D(p, angle, angle * 0.5);
+        projected.push(project4Dto3D(p));
+      }
+
+      for (let obj of lines) {
+        const index1 = obj.edge[0];
+        const index2 = obj.edge[1];
+        const posAttr = obj.line.geometry.attributes.position.array;
+        posAttr[0] = projected[index1].x;
+        posAttr[1] = projected[index1].y;
+        posAttr[2] = projected[index1].z;
+        posAttr[3] = projected[index2].x;
+        posAttr[4] = projected[index2].y;
+        posAttr[5] = projected[index2].z;
+        obj.line.geometry.attributes.position.needsUpdate = true;
+      }
+      
+      tesseractGroup.rotation.x += 0.003;
+      tesseractGroup.rotation.y += 0.003;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Text shifting animation
+    const messages = [
+      "A tesseract is a 4D cube made of 8 cubes.",
+      "In 4D, objects rotate in ways unimaginable in 3D.",
+      "Higher dimensions change how we see space and time.",
+      "The 4th dimension allows new forms of movement.",
+      "Understanding 4D helps in advanced physics theories."
+    ];
+    let msgIndex = 0;
+    const shiftingElem = document.getElementById("shiftingData");
+    setInterval(() => {
+      shiftingElem.classList.toggle("hidden");
+      setTimeout(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        shiftingElem.innerText = messages[msgIndex];
+        shiftingElem.classList.toggle("hidden");
+      }, 1000);
+    }, 5000);
+  </script>
+
+</body>
+</html>

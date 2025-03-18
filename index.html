@@ -55,14 +55,6 @@
       font-size: 1.5em;
     }
 
-    /* Shifting text */
-    #shiftingData {
-      transition: opacity 1s ease-in-out;
-    }
-    .hidden {
-      opacity: 0;
-    }
-
     /* Animated stars background */
     .star {
       position: absolute;
@@ -77,22 +69,10 @@
       50% { opacity: 0.3; }
     }
 
+    /* Canvas tweaks for clarity */
     canvas {
       display: block;
-    }
-
-    /* Mobile adjustments for the info box */
-    @media (max-width: 768px) {
-      #info {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        top: auto;
-        right: auto;
-        transform: translateX(-50%);
-        padding: 30px;
-        font-size: 1.2em;
-      }
+      image-rendering: optimizeQuality;
     }
   </style>
 </head>
@@ -127,6 +107,7 @@
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 5;
     const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -160,9 +141,10 @@
       }
     }
 
-    // Create tesseract group
+    // Create tesseract group and lines
     const tesseractGroup = new THREE.Group();
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00bcd4, linewidth: 3 });
+    // Set linewidth to 2 (may have an effect on some systems)
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00bcd4, linewidth: 2 });
     const lines = [];
     for (let edge of edges) {
       const geometry = new THREE.BufferGeometry();
@@ -174,7 +156,7 @@
     }
     scene.add(tesseractGroup);
 
-    // Rotation logic
+    // Rotation logic for 4D
     let angle = 0;
     function rotate4D(point, a, b) {
       let cos = Math.cos(a), sin = Math.sin(a);
@@ -223,24 +205,57 @@
     }
     animate();
 
-    // Text shifting animation
+    // Combined typing and fade-out animation for "About 4th Dimension"
     const messages = [
-      "A tesseract is a 4D cube made of 8 cubes.",
-      "In 4D, objects rotate in ways unimaginable in 3D.",
-      "Higher dimensions change how we see space and time.",
-      "The 4th dimension allows new forms of movement.",
-      "Understanding 4D helps in advanced physics theories."
+      "A tesseract is a 4D cube made of 8 cubes. It extends beyond our usual 3D space.",
+      "In 4D, objects rotate in ways unimaginable in 3D, revealing hidden geometries.",
+      "The fourth dimension, often considered as time, unites space and time in relativity.",
+      "Understanding 4D challenges our perception and opens new frontiers in physics.",
+      "Mathematically, higher dimensions allow us to explore complex shapes and symmetries."
     ];
-    let msgIndex = 0;
-    const shiftingElem = document.getElementById("shiftingData");
-    setInterval(() => {
-      shiftingElem.classList.toggle("hidden");
-      setTimeout(() => {
-        msgIndex = (msgIndex + 1) % messages.length;
-        shiftingElem.innerText = messages[msgIndex];
-        shiftingElem.classList.toggle("hidden");
-      }, 1000);
-    }, 5000);
+
+    const typingDelay = 50;    // Delay between each character (in ms)
+    const messageDelay = 2000; // Time to display the full message before fading out
+    const fadeDuration = 1000; // Fade-out duration (in ms)
+
+    function typeText(element, text, delay) {
+      return new Promise(resolve => {
+        element.style.opacity = 1; // Ensure element is visible
+        element.innerHTML = "";
+        let i = 0;
+        function type() {
+          if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, delay);
+          } else {
+            resolve();
+          }
+        }
+        type();
+      });
+    }
+
+    function fadeOut(element, duration) {
+      return new Promise(resolve => {
+        element.style.transition = `opacity ${duration}ms`;
+        element.style.opacity = 0;
+        setTimeout(() => {
+          resolve();
+        }, duration);
+      });
+    }
+
+    async function cycleMessages(element, messages, index = 0) {
+      await typeText(element, messages[index], typingDelay);
+      await new Promise(resolve => setTimeout(resolve, messageDelay));
+      await fadeOut(element, fadeDuration);
+      element.innerHTML = "";
+      element.style.opacity = 1;
+      cycleMessages(element, messages, (index + 1) % messages.length);
+    }
+
+    cycleMessages(document.getElementById("shiftingData"), messages);
   </script>
 
 </body>
